@@ -85,10 +85,12 @@ resource "aws_cloudformation_stack_set" "self_managed" {
 }
 
 resource "aws_cloudformation_stack_set_instance" "this" {
-  for_each = var.create_instance && length(var.stackset_instance_organizational_unit_ids) > 0 ? toset(var.stackset_instance_organizational_unit_ids) : toset([])
+  for_each = var.create_instance && length(coalesce(var.stackset_instance_organizational_unit_ids, [])) > 0 ? { 0 = true } : {}
 
   deployment_targets {
-    organizational_unit_ids = [each.key]
+    organizational_unit_ids = var.stackset_instance_organizational_unit_ids
+    accounts = var.stackset_instance_accounts
+    account_filter_type = try(var.stackset_instance_account_filter_type, null)
   }
 
   operation_preferences {
@@ -110,10 +112,16 @@ resource "aws_cloudformation_stack_set_instance" "this" {
     ? aws_cloudformation_stack_set.default[0].name
     : aws_cloudformation_stack_set.self_managed[0].name
   )
+
+  timeouts {
+    create = try(var.timeouts.create, null)
+    delete = try(var.timeouts.delete, null)
+    update = try(var.timeouts.update, null)
+  }
 }
 
 resource "aws_cloudformation_stack_set_instance" "accounts" {
-  count = var.create_instance == true && length(var.stackset_instance_accounts) > 0 ? 1 : 0
+  for_each = var.create_instance == true && length(coalesce(var.stackset_instance_organizational_unit_ids, [])) == 0 ? { 0 = true } : {}
 
   deployment_targets {
     accounts = var.stackset_instance_accounts
@@ -138,4 +146,11 @@ resource "aws_cloudformation_stack_set_instance" "accounts" {
     ? aws_cloudformation_stack_set.default[0].name
     : aws_cloudformation_stack_set.self_managed[0].name
   )
+
+  timeouts {
+    create = try(var.timeouts.create, null)
+    delete = try(var.timeouts.delete, null)
+    update = try(var.timeouts.update, null)
+  }
 }
+

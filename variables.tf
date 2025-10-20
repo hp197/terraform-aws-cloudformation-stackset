@@ -127,5 +127,23 @@ variable "stackset_instance_organizational_unit_ids" {
 variable "stackset_instance_accounts" {
   type        = list(string)
   description = "The list of AWS Account IDs to which StackSets instance deploys."
-  default     = []
+  default     = null
+}
+variable "stackset_instance_account_filter_type" {
+  type        = string
+  description = "(Optional) The filter type to use when specifying accounts for StackSets instance deploys. Valid values: NONE, INTERSECTION, DIFFERENCE, UNION."
+  default     = null
+}
+variable "timeouts" {
+  type = object({
+    create = string,
+    update = string,
+    delete = string
+  })
+  default = {
+    create : null,
+    update : null,
+    delete : null
+  }
+  description = "(Optional) Custom timeouts for create, update, and delete operations."
 }
